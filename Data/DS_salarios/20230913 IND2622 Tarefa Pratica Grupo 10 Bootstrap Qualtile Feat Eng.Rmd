@@ -1,0 +1,91 @@
+---
+title: "Ciência de dados"
+author: "Katsuo & Celso"
+date: "2023-09-13"
+output: pdf_document
+---
+#Exercicio 1 Ciencia de Dados
+```{r}
+library(readxl)
+library(boot)
+library(ggplot2)
+library(tidyverse)
+```
+
+#Ler base de dados
+```{r}
+dados<-read.csv("C:/08_Mestrado/Programacao/Programacao_R/Ciencia_de_Dados/ds_salaries.csv")
+dados
+```
+#gerar estatisticas
+```{r}
+summary(dados)
+mean(dados$salary_in_usd) 
+median(dados$salary_in_usd)
+var(dados$salary_in_usd) 
+```
+```{r}
+# Criar um vetor de reamostragem:
+vetor = rep(NA, 1000)
+
+# Simular a reamostragem 1000 vezes:
+for (i in 1:1000) {
+  reamostra = sample(dados$salary_in_usd,replace = T) # Reamostragem com reposição
+  vetor[i] = mean(reamostra) # Calcular a média das reamostras
+}
+```
+
+# Vetor em formato tidy:
+```{r}
+vetor = data.frame(salarios = vetor)
+```
+
+# Criar o gráfico de distribuição da média bootstrap:
+
+```{r}
+vetor  %>%
+  ggplot(aes(x = salarios)) +
+  geom_histogram(alpha = 0.4, fill = "blue") +
+  labs(
+    title = "Distribuição dos Salários",
+    subtitle = paste0("Média: ", round(mean(dados$salary_in_usd),1),".")
+  ) + 
+  theme_light()
+```
+#transformar variável numérica em quantiles
+
+```{r}
+tamanho = length(dados$salary_in_usd)
+
+sal_baixo <- quantile(dados$salary_in_usd)[2]
+sal_medio <- quantile(dados$salary_in_usd)[3]
+sal_alto <- quantile(dados$salary_in_usd)[4]
+
+for (i in 1:tamanho) {
+  if (dados$salary_in_usd[i] <= sal_baixo) {
+    dados$salary_in_usd_disc[i] <- "1o quartil"
+  } else if (dados$salary_in_usd[i] <= sal_medio && dados$salary_in_usd[i] > sal_baixo) {
+    dados$salary_in_usd_disc[i] <- "2o quartil"
+  } else if (dados$salary_in_usd[i] <= sal_alto && dados$salary_in_usd[i] > sal_medio) {
+    dados$salary_in_usd_disc[i] <- "3o quartil"
+  } else if (dados$salary_in_usd[i] > sal_alto) {
+    dados$salary_in_usd_disc[i] <- "4o quartil"
+  }
+}
+head(dados)
+```
+#Contar os meses - Feature Engineering
+
+```{r}
+mes = 06
+ano = 2020
+
+conta_mes <- c()
+for (i in 1:tamanho) {
+  conta_mes[i] = ((dados$work_year[i] - ano) * 12) + (dados$work_month[i] - mes)
+}
+dados$conta_mes = conta_mes
+tail(dados)
+```
+
+
